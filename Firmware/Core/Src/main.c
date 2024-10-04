@@ -74,8 +74,8 @@ static void MX_TIM4_Init(void);
 	double x_r = 0;
 	double y_r = 0;
 	double theta_r = 0;
-	double v_r = 0.2;
-	double w_r = 0.2;
+//	double v_r = 0.2;
+//	double w_r = 0.2;
 
 	double e_x;
 	double e_y;
@@ -104,7 +104,7 @@ static void MX_TIM4_Init(void);
 	uint16_t duty_cycle1 = 0; // for motor left
 	uint16_t duty_cycle2 = 0; // for motor right duty + 140 = duty 1 (v1 = v2)
 
-	double sampling_interval = 10e-10 ;
+	double sampling_interval = 10e-4 ;
 
 	//Vehicle parameters
     double I = 0.0315;
@@ -168,19 +168,24 @@ int main(void)
       matrix v;
       allocate_matrix(&v, 2, 1);
 
+      matrix v_r;
+      allocate_matrix(&v_r, 2, 1);
+      v_r.index[0][0] = 0.5;
+      v_r.index[1][0] = 0.5;
+
       matrix v_c;
       allocate_matrix(&v_c, 2, 1);
 
-      matrix v_c_old;
-      allocate_matrix(&v_c_old, 2, 1);
+      matrix v_c_pre;
+      allocate_matrix(&v_c_pre, 2, 1);
 
       matrix u;
       allocate_matrix(&u, 2, 1);
 
-      matrix tau;
-      allocate_matrix(&tau, 2, 1);
+      matrix torque;
+      allocate_matrix(&torque, 2, 1);
 
-      virtual_control(&v_c_old, &K, &v_c, e_x, e_y, e_theta, v_r, w_r);
+      control_input_signal(&u, v_c, v_c_pre, v, K_4);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -212,40 +217,85 @@ int main(void)
   	  present_time = HAL_GetTick();
   while (1)
   {
-	  encoder_cnt1 = __HAL_TIM_GET_COUNTER(&htim1);
-	  double a = encoder_cnt1;
-	  encoder_cnt2 = __HAL_TIM_GET_COUNTER(&htim2);
-	  double b = encoder_cnt2;
+	  	  	  encoder_cnt1 = __HAL_TIM_GET_COUNTER(&htim1);
+	 	  	  double a = encoder_cnt1;
+	 	  	  encoder_cnt2 = __HAL_TIM_GET_COUNTER(&htim2);
+	 	  	  double b = encoder_cnt2;
+	 	  	  if(HAL_GetTick() - present_time > sampling_interval) {
+	 	  	 		  	if(a - encoder1_previous < 0) {
+	 	  	 		  		left_angular_velocity = ((a - encoder1_previous + 65535) / 660) * 6.18 / sampling_interval;
+	 	  	 		  	}
+	 	  	 		  	else {
+	 	  	 		  		left_angular_velocity = ((a - encoder1_previous) / 660) * 6.18 / sampling_interval;
+	 	  	 		  	}
 
-	  if(HAL_GetTick() - present_time > sample_time) {
-		  	if(encoder_cnt1 - encoder1_previous < 0) {
-		  		left_angular_velocity = ((encoder_cnt1 - encoder1_previous + 65535) / 1320) * rate;
-		  	}
-		  	else {
-		  		left_angular_velocity = ((encoder_cnt1 - encoder1_previous) / 1320) * rate;
-		  	}
+	 	  	 		  	if(b - encoder2_previous < 0) {
+	 	  	 		  		right_angular_velocity = ((b - encoder2_previous + 65535) / 660) * 6.18 / sampling_interval;
+	 	  	 		  	}
+	 	  	 		  	else {
+	 	  	 		  		right_angular_velocity = ((b - encoder2_previous) / 660) * 6.18 / sampling_interval;
+	 	  	 		  	}
+	 	  		  	encoder1_previous = a;
+	 	  		  	encoder2_previous = b;
 
-		  	if(encoder_cnt2 - encoder2_previous < 0) {
-		  		right_angular_velocity = ((encoder_cnt1 - encoder1_previous + 65535) / 1320) * rate;
-		  	}
-		  	else {
-		  		right_angular_velocity = ((encoder_cnt2 - encoder2_previous) / 1320) * rate;
-		  	}
+	 //	  double t, h;
+	 //	  encoder_cnt1 = 0;//__HAL_TIM_GET_COUNTER(&htim1);
+	 //	  encoder_cnt2 = __HAL_TIM_GET_COUNTER(&htim2);
+	 //
+	 //	  if(number == 0)
+	 //	  {
+	 //		  number += 1;
+	 //		  encoder2_previous = 0;
+	 //	  }
+	 //	  else if(number == 1)
+	 //			  	{
+	 //			  		encoder2_previous = 62000;
+	 //			  		number += 1;
+	 //			  		t = encoder_cnt2;
+	 //			  	}
+	 //	  else if(number == 2)
+	 //			  	{
+	 //		  		encoder1_previous = 0;//encoder_cnt1;
+	 //		  		encoder2_previous = t;
+	 //		  		h = encoder_cnt2;
+	 //		  		number += 1;
+	 //			  	}
+	 //
+	 //	  else
+	 //	  	{
+	 //	  		encoder2_previous = h;
+	 //	  		h = encoder_cnt2;
+	 //	  	}
+	 //
+	 //
+	 //	  if(HAL_GetTick() - present_time > sample_time) {
+	 //		  	if(encoder_cnt1 - encoder1_previous < 0) {
+	 //		  		left_angular_velocity = ((encoder_cnt1 - encoder1_previous + 65535) / 1320) * rate;
+	 //		  	}
+	 //		  	else {
+	 //		  		left_angular_velocity = ((encoder_cnt1 - encoder1_previous) / 1320) * rate;
+	 //		  	}
+	 //
+	 //		  	if(encoder_cnt2 - encoder2_previous < 0) {
+	 //		  		right_angular_velocity = ((encoder_cnt1 - encoder1_previous + 65535) / 1320) * rate;
+	 //		  	}
+	 //		  	else {
+	 //		  		right_angular_velocity = ((encoder_cnt2 - encoder2_previous) / 1320) * rate;
+	 //		  	}
+	 //
+	 //		  	encoder_test_1 = encoder_cnt1 - encoder1_previous;
+	 //			encoder_test_2 = encoder_cnt2 - encoder2_previous;
 
-		  	encoder_test_1 = encoder_cnt1 - encoder1_previous;
-		  	encoder_test_2 = encoder_cnt2 - encoder2_previous;
-		  	encoder1_previous = encoder_cnt1;
-		  	encoder2_previous = encoder_cnt2;
-
-	  		velocity(&v, left_angular_velocity, right_angular_velocity);
-	  		error(x, y, theta, x_r, y_r, theta_r, &e_x, &e_y, &e_theta);
-	  		virtual_control(&v_c, &K, &v_c_old, e_x, e_y, e_theta, v_r, w_r);
-	  		control_signal(&u, &v_c, &v_c, &v, &K_4);
-	  		torque(theta, &v, &u, &tau);
-	  		voltage(&voltage_left, &voltage_right, left_angular_velocity, right_angular_velocity, &tau);
-	  		next_state(&v, &x, &y, &theta, &x_r, &y_r, &theta_r, w_r, v_r);
-	  		convert_v_to_pwm(&duty_cycle1, &duty_cycle2, voltage_left, voltage_right);
-	  		pulse_modulation(&duty_cycle1, &duty_cycle2);
+	 			//desired_trajectory(&v_r, x_r, y_r);
+	 	  		velocity(&v, left_angular_velocity, right_angular_velocity);
+	 	  		errors(&e_x, &e_y, &e_theta, x, y, theta, x_r, y_r, theta_r);
+	 	  		velocity_control_input(&v_c, &v_c_pre, v_r, K, e_x, e_y, e_theta);
+	 	  		control_input_signal(&u, v_c, v_c_pre, v, K_4);
+	 	  		cal_torque(&torque, v, u);
+	 	  		voltage(&voltage_left, &voltage_right, left_angular_velocity, right_angular_velocity, &torque);
+	 	  		next_state(&x, &y, &theta, &x_r, &y_r, &theta_r, v, v_r);
+	 	  		convert_v_to_pwm(&duty_cycle1, &duty_cycle2, voltage_left, voltage_right);
+	 	  		pulse_modulation(&duty_cycle1, &duty_cycle2);
 //
 //	  		pulse_modulation_test();
 	  		present_time = HAL_GetTick();

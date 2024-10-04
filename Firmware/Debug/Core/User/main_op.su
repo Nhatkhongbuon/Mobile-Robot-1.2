@@ -1,8 +1,7 @@
-../Core/User/main_op.c:30:6:desired_trajectory	160	static
-../Core/User/main_op.c:64:6:error	48	static
-../Core/User/main_op.c:73:6:virtual_control	40	static
-../Core/User/main_op.c:86:6:control_signal	56	static
-../Core/User/main_op.c:103:6:next_state	80	static
-../Core/User/main_op.c:126:6:torque	112	static
-../Core/User/main_op.c:176:6:velocity	40	static
-../Core/User/main_op.c:183:6:voltage	32	static
+../Core/User/main_op.c:60:6:errors	48	static
+../Core/User/main_op.c:67:6:velocity	40	static
+../Core/User/main_op.c:76:6:velocity_control_input	40	static
+../Core/User/main_op.c:89:6:control_input_signal	64	static
+../Core/User/main_op.c:119:6:next_state	80	static
+../Core/User/main_op.c:142:6:cal_torque	112	static
+../Core/User/main_op.c:202:6:voltage	32	static
