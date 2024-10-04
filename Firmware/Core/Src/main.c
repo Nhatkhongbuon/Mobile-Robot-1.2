@@ -65,17 +65,18 @@ static void MX_TIM4_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
+
 	double x = 0;
 	double y = 0;
 	double theta = 0;
+
 	double left_angular_velocity = 0;
 	double right_angular_velocity = 0;
 
 	double x_r = 0;
 	double y_r = 0;
 	double theta_r = 0;
-//	double v_r = 0.2;
-//	double w_r = 0.2;
 
 	double e_x;
 	double e_y;
@@ -87,24 +88,18 @@ static void MX_TIM4_Init(void);
 	volatile double encoder_cnt1 = 0;
 	volatile double encoder_cnt2 = 0;
 
-	// test
-	double t1 = 0;
-	double t2 = 0;
-	double encoder_test_1 = 0;
-	double encoder_test_2 = 0;
-
 	volatile double encoder1_previous = 0;
 	volatile double encoder2_previous = 0;
 
-	double present_time = 0;
-	double sample_time = 100;
-	double rate = 10 * 6.28; // = 1000/sample_time
+//	double present_time = 0;
+//	double sample_time = 100;
+//	double rate = 10 * 6.28; // = 1000/sample_time
 //	double rate = 100;
 
 	uint16_t duty_cycle1 = 0; // for motor left
 	uint16_t duty_cycle2 = 0; // for motor right duty + 140 = duty 1 (v1 = v2)
 
-	double sampling_interval = 10e-4 ;
+	double sampling_interval = 10e-6 ;
 
 	//Vehicle parameters
     double I = 0.0315;
@@ -113,13 +108,11 @@ static void MX_TIM4_Init(void);
 	double d = 0.037;
 	double m = 0.927;
 
-
+	double present_time = 0;
 
 	//Motor parameters
 	double k_phi = 9.76e-3;
 	double R_a = 4.35;
-
-	double number = 0;
 
 	void pulse_modulation(uint16_t *duty_cycle1, uint16_t *duty_cycle2) {
 		__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, *duty_cycle1); // left
@@ -151,8 +144,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
-      //Controller parameters
+  //Controller parameters
       matrix K;
       allocate_matrix(&K, 3 ,1);
       K.index[0][0] = 1;
@@ -163,7 +155,6 @@ int main(void)
       allocate_matrix(&K_4, 2, 2);
       K_4.index[0][0] = 1;
       K_4.index[1][1] = 1;
-      //.
 
       matrix v;
       allocate_matrix(&v, 2, 1);
@@ -185,7 +176,7 @@ int main(void)
       matrix torque;
       allocate_matrix(&torque, 2, 1);
 
-      control_input_signal(&u, v_c, v_c_pre, v, K_4);
+      velocity_control_input(&v_c, &v_c_pre, v_r, K, e_x, e_y, e_theta);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -217,6 +208,7 @@ int main(void)
   	  present_time = HAL_GetTick();
   while (1)
   {
+
 	  	  	  encoder_cnt1 = __HAL_TIM_GET_COUNTER(&htim1);
 	 	  	  double a = encoder_cnt1;
 	 	  	  encoder_cnt2 = __HAL_TIM_GET_COUNTER(&htim2);
@@ -237,54 +229,6 @@ int main(void)
 	 	  	 		  	}
 	 	  		  	encoder1_previous = a;
 	 	  		  	encoder2_previous = b;
-
-	 //	  double t, h;
-	 //	  encoder_cnt1 = 0;//__HAL_TIM_GET_COUNTER(&htim1);
-	 //	  encoder_cnt2 = __HAL_TIM_GET_COUNTER(&htim2);
-	 //
-	 //	  if(number == 0)
-	 //	  {
-	 //		  number += 1;
-	 //		  encoder2_previous = 0;
-	 //	  }
-	 //	  else if(number == 1)
-	 //			  	{
-	 //			  		encoder2_previous = 62000;
-	 //			  		number += 1;
-	 //			  		t = encoder_cnt2;
-	 //			  	}
-	 //	  else if(number == 2)
-	 //			  	{
-	 //		  		encoder1_previous = 0;//encoder_cnt1;
-	 //		  		encoder2_previous = t;
-	 //		  		h = encoder_cnt2;
-	 //		  		number += 1;
-	 //			  	}
-	 //
-	 //	  else
-	 //	  	{
-	 //	  		encoder2_previous = h;
-	 //	  		h = encoder_cnt2;
-	 //	  	}
-	 //
-	 //
-	 //	  if(HAL_GetTick() - present_time > sample_time) {
-	 //		  	if(encoder_cnt1 - encoder1_previous < 0) {
-	 //		  		left_angular_velocity = ((encoder_cnt1 - encoder1_previous + 65535) / 1320) * rate;
-	 //		  	}
-	 //		  	else {
-	 //		  		left_angular_velocity = ((encoder_cnt1 - encoder1_previous) / 1320) * rate;
-	 //		  	}
-	 //
-	 //		  	if(encoder_cnt2 - encoder2_previous < 0) {
-	 //		  		right_angular_velocity = ((encoder_cnt1 - encoder1_previous + 65535) / 1320) * rate;
-	 //		  	}
-	 //		  	else {
-	 //		  		right_angular_velocity = ((encoder_cnt2 - encoder2_previous) / 1320) * rate;
-	 //		  	}
-	 //
-	 //		  	encoder_test_1 = encoder_cnt1 - encoder1_previous;
-	 //			encoder_test_2 = encoder_cnt2 - encoder2_previous;
 
 	 			//desired_trajectory(&v_r, x_r, y_r);
 	 	  		velocity(&v, left_angular_velocity, right_angular_velocity);

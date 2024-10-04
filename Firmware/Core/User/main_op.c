@@ -57,19 +57,18 @@ extern double R_a;
 //    + (derivative_x_r * derivative_v_r - derivative_x_r_2nd * v_r->index[0][0]) / (v_r->index[0][0] * derivative_y_r)));
 //}
 
-void errors(double *e_x, double *e_y, double *e_theta, double x, double y, double theta, double x_r, double y_r, double theta_r)
-{
-    *e_x = cos(theta) * (x_r - x) + sin(theta) * (y_r - y);
-    *e_y = (-1) * sin(theta) * (x_r - x) + cos(theta) * (y_r - y);
-    *e_theta = theta_r - theta;
-}
-
 void velocity(matrix *v, double left_angular_velocity, double right_angular_velocity)
 {
     v->index[0][0] = r / 2 * (left_angular_velocity + right_angular_velocity);
     v->index[1][0] = r / (2 * R) * (right_angular_velocity - left_angular_velocity);
 }
 
+void errors(double *e_x, double *e_y, double *e_theta, double x, double y, double theta, double x_r, double y_r, double theta_r)
+{
+    *e_x = cos(theta) * (x_r - x) + sin(theta) * (y_r - y);
+    *e_y = (-1) * sin(theta) * (x_r - x) + cos(theta) * (y_r - y);
+    *e_theta = theta_r - theta;
+}
 
 // Caculate virtural control signal
 // Must allocate v_c matrix and K matrix in the main program
@@ -144,18 +143,14 @@ void cal_torque(matrix *torque, matrix v, matrix u)
     matrix M;
     allocate_matrix(&M, 2, 2);
     M.index[0][0] = m;
-    // M.index[1][0] = 0;
-    // M.index[0][1] = 0;
     M.index[1][1] = I;
 
     double derivative_theta = v.index[1][0];
 
     matrix V;
     allocate_matrix(&V, 2, 2);
-    // V.index[0][0] = 0;
     V.index[0][1] = m * d * derivative_theta;
     V.index[1][0] = - m * d * derivative_theta;
-    // V.index[1][1] = 0;
 
     matrix B;
     allocate_matrix(&B, 2, 2);
@@ -192,9 +187,6 @@ void cal_torque(matrix *torque, matrix v, matrix u)
     torque->index[0][0] = tau.index[0][0];
     torque->index[1][0] = tau.index[1][0];
 
-    t1 = torque->index[0][0];
-    t2 = torque->index[1][0];
-
     deallocate_matrix(&tau);
 }
 
@@ -205,16 +197,4 @@ void voltage(double *voltage_left, double *voltage_right, double left_angular_ve
     *voltage_right = k_phi * right_angular_velocity * 30 + R_a * torque->index[0][0] / k_phi;
 }
 
- //Calculate voltage for the motor
-//void voltage(double *voltage_left, double *voltage_right, double left_angular_velocity, double right_angular_velocity, matrix *tau)
-//{
-//    *voltage_left =  R_a * tau->index[1][0] / k_phi;
-//    *voltage_right =  R_a * tau->index[0][0] / k_phi;
-//}
-
-//void voltage(double *voltage_left, double *voltage_right, double left_angular_velocity, double right_angular_velocity, matrix *tau)
-//{
-//    *voltage_left = k_phi * left_angular_velocity * 30 + 1;
-//    *voltage_right = k_phi * right_angular_velocity * 30 + 1;
-//}
 
